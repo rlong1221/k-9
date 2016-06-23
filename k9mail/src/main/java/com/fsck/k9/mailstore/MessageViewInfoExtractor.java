@@ -41,7 +41,11 @@ public class MessageViewInfoExtractor {
     private static final int FILENAME_SUFFIX_LENGTH = FILENAME_SUFFIX.length();
     private static final CryptoResultAnnotation NO_ANNOTATIONS = null;
 
-    private MessageViewInfoExtractor() {}
+
+    private static final AttachmentInfoExtractor attachmentInfoExtractor = AttachmentInfoExtractor.getInstance();
+
+
+    private MessageViewInfoExtractor() { }
 
     public static MessageViewInfo extractMessageForView(Context context,
             Message message, MessageCryptoAnnotations annotations) throws MessagingException {
@@ -66,7 +70,7 @@ public class MessageViewInfoExtractor {
 
             // 3. parse viewables into html string
             ViewableExtractedText viewable = MessageViewInfoExtractor.extractTextFromViewables(context, viewableParts);
-            List<AttachmentViewInfo> attachmentInfos = AttachmentInfoExtractor.extractAttachmentInfos(attachments);
+            List<AttachmentViewInfo> attachmentInfos = attachmentInfoExtractor.extractAttachmentInfos(attachments);
 
             AttachmentResolver attachmentResolver = AttachmentResolver.createFromPart(part);
 

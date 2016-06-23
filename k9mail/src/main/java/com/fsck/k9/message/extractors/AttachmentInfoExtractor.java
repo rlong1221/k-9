@@ -21,7 +21,13 @@ import com.fsck.k9.provider.AttachmentProvider;
 
 
 public class AttachmentInfoExtractor {
-    public static List<AttachmentViewInfo> extractAttachmentInfos(List<Part> attachmentParts)
+    private AttachmentInfoExtractor() { }
+
+    public static AttachmentInfoExtractor getInstance() {
+        return new AttachmentInfoExtractor();
+    }
+
+    public List<AttachmentViewInfo> extractAttachmentInfos(List<Part> attachmentParts)
             throws MessagingException {
 
         List<AttachmentViewInfo> attachments = new ArrayList<>();
@@ -32,7 +38,7 @@ public class AttachmentInfoExtractor {
         return attachments;
     }
 
-    public static AttachmentViewInfo extractAttachmentInfo(Part part) throws MessagingException {
+    public AttachmentViewInfo extractAttachmentInfo(Part part) throws MessagingException {
         if (part instanceof LocalPart) {
             LocalPart localPart = (LocalPart) part;
             String accountUuid = localPart.getAccountUuid();
@@ -58,16 +64,16 @@ public class AttachmentInfoExtractor {
                 }
                 return extractAttachmentInfo(part, uri, size);
             } else {
-                throw new RuntimeException("Not supported");
+                throw new IllegalArgumentException("Unsupported part type provided");
             }
         }
     }
 
-    public static AttachmentViewInfo extractAttachmentInfoForDatabase(Part part) throws MessagingException {
+    public AttachmentViewInfo extractAttachmentInfoForDatabase(Part part) throws MessagingException {
         return extractAttachmentInfo(part, Uri.EMPTY, AttachmentViewInfo.UNKNOWN_SIZE);
     }
 
-    private static AttachmentViewInfo extractAttachmentInfo(Part part, Uri uri, long size) throws MessagingException {
+    private AttachmentViewInfo extractAttachmentInfo(Part part, Uri uri, long size) throws MessagingException {
         boolean firstClassAttachment = true;
 
         String mimeType = part.getMimeType();
@@ -81,7 +87,10 @@ public class AttachmentInfoExtractor {
 
         if (name == null) {
             firstClassAttachment = false;
-            String extension = MimeUtility.getExtensionByMimeType(mimeType);
+            String extension = null;
+            if (mimeType != null) {
+                extension = MimeUtility.getExtensionByMimeType(mimeType);
+            }
             name = "noname" + ((extension != null) ? "." + extension : "");
         }
 
@@ -99,7 +108,7 @@ public class AttachmentInfoExtractor {
         return new AttachmentViewInfo(mimeType, name, attachmentSize, uri, firstClassAttachment, part);
     }
 
-    private static long extractAttachmentSize(String contentDisposition, long size) {
+    private long extractAttachmentSize(String contentDisposition, long size) {
         if (size != AttachmentViewInfo.UNKNOWN_SIZE) {
             return size;
         }
