@@ -12,12 +12,12 @@ import com.fsck.k9.mail.MessagingException;
 import com.fsck.k9.mail.internet.SizeAware;
 
 
-public class DecryptedTempFileBody extends BinaryAttachmentBody implements SizeAware {
+public class ProvidedTempFileBody extends BinaryAttachmentBody implements SizeAware {
     private final File tempDirectory;
     private File file;
 
 
-    public DecryptedTempFileBody(File tempDirectory, String transferEncoding) {
+    public ProvidedTempFileBody(File tempDirectory, String transferEncoding) {
         this.tempDirectory = tempDirectory;
         try {
             setEncoding(transferEncoding);

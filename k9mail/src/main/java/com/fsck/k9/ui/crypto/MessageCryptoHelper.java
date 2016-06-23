@@ -30,7 +30,7 @@ import com.fsck.k9.mail.Part;
 import com.fsck.k9.mail.internet.MessageExtractor;
 import com.fsck.k9.mail.internet.MimeBodyPart;
 import com.fsck.k9.mail.internet.TextBody;
-import com.fsck.k9.mailstore.DecryptStreamParser;
+import com.fsck.k9.mailstore.MimePartStreamParser;
 import com.fsck.k9.mailstore.LocalMessage;
 import com.fsck.k9.mailstore.MessageHelper;
 import com.fsck.k9.mailstore.CryptoResultAnnotation;
@@ -320,7 +320,7 @@ public class MessageCryptoHelper {
             protected MimeBodyPart doInBackground(Void... params) {
                 MimeBodyPart decryptedPart = null;
                 try {
-                    decryptedPart = DecryptStreamParser.parse(context, decryptedInputStream);
+                    decryptedPart = MimePartStreamParser.parse(context, decryptedInputStream);
 
                     latch.await();
                 } catch (InterruptedException e) {

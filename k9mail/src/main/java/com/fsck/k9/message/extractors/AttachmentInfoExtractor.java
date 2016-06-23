@@ -14,7 +14,7 @@ import com.fsck.k9.mail.Part;
 import com.fsck.k9.mail.internet.MimeHeader;
 import com.fsck.k9.mail.internet.MimeUtility;
 import com.fsck.k9.mailstore.AttachmentViewInfo;
-import com.fsck.k9.mailstore.DecryptedTempFileBody;
+import com.fsck.k9.mailstore.ProvidedTempFileBody;
 import com.fsck.k9.mailstore.LocalPart;
 import com.fsck.k9.provider.AttachmentProvider;
 import com.fsck.k9.provider.K9FileProvider;
@@ -46,9 +46,9 @@ public class AttachmentInfoExtractor {
             return new AttachmentViewInfo(mimeType, displayName, size, uri, firstClassAttachment, part);
         } else {
             Body body = part.getBody();
-            if (body instanceof DecryptedTempFileBody) {
-                DecryptedTempFileBody decryptedTempFileBody = (DecryptedTempFileBody) body;
-                File file = decryptedTempFileBody.getFile();
+            if (body instanceof ProvidedTempFileBody) {
+                ProvidedTempFileBody providedTempFileBody = (ProvidedTempFileBody) body;
+                File file = providedTempFileBody.getFile();
                 Uri uri = K9FileProvider.getUriForFile(context, file, part.getMimeType());
                 long size = file.length();
                 return extractAttachmentInfo(part, uri, size);
