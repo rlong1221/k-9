@@ -8,17 +8,23 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import android.net.Uri;
+
 import com.fsck.k9.mail.MessagingException;
 import com.fsck.k9.mail.internet.SizeAware;
+import com.fsck.k9.service.FileProviderInterface;
 
 
+/** This is a body where the body can be accessed through a FileProvider.
+ * @see FileProviderInterface
+ */
 public class ProvidedTempFileBody extends BinaryAttachmentBody implements SizeAware {
-    private final File tempDirectory;
+    private final FileProviderInterface fileProviderInterface;
     private File file;
 
 
-    public ProvidedTempFileBody(File tempDirectory, String transferEncoding) {
-        this.tempDirectory = tempDirectory;
+    public ProvidedTempFileBody(FileProviderInterface fileProviderInterface, String transferEncoding) {
+        this.fileProviderInterface = fileProviderInterface;
         try {
             setEncoding(transferEncoding);
         } catch (MessagingException e) {
@@ -27,7 +33,7 @@ public class ProvidedTempFileBody extends BinaryAttachmentBody implements SizeAw
     }
 
     public OutputStream getOutputStream() throws IOException {
-        file = File.createTempFile("decrypted", null, tempDirectory);
+        file = fileProviderInterface.createProvidedFile();
         return new FileOutputStream(file);
     }
 
@@ -45,7 +51,7 @@ public class ProvidedTempFileBody extends BinaryAttachmentBody implements SizeAw
         return file.length();
     }
 
-    public File getFile() {
-        return file;
+    public Uri getProviderUri(String mimeType) throws IOException {
+        return fileProviderInterface.getUriForProvidedFile(file, mimeType);
     }
 }

@@ -2,16 +2,11 @@ package com.fsck.k9.mailstore;
 
 
 import java.io.BufferedInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Stack;
 
-import android.content.Context;
-import android.util.Log;
-
-import com.fsck.k9.K9;
 import com.fsck.k9.mail.Body;
 import com.fsck.k9.mail.BodyPart;
 import com.fsck.k9.mail.Message;
@@ -22,6 +17,7 @@ import com.fsck.k9.mail.internet.MimeBodyPart;
 import com.fsck.k9.mail.internet.MimeMessage;
 import com.fsck.k9.mail.internet.MimeMultipart;
 import com.fsck.k9.mail.internet.MimeUtility;
+import com.fsck.k9.service.FileProviderInterface;
 import org.apache.commons.io.IOUtils;
 import org.apache.james.mime4j.MimeException;
 import org.apache.james.mime4j.codec.Base64InputStream;
@@ -36,12 +32,9 @@ import org.apache.james.mime4j.util.MimeUtil;
 
 public class MimePartStreamParser {
 
-    private static final String DECRYPTED_CACHE_DIRECTORY = "decrypted";
-
-    public static MimeBodyPart parse(Context context, InputStream inputStream) throws MessagingException, IOException {
-        File decryptedTempDirectory = getDecryptedTempDirectory(context);
-
-        MimeBodyPart decryptedRootPart = new MimeBodyPart();
+    public static MimeBodyPart parse(FileProviderInterface fileProviderInterface, InputStream inputStream)
+            throws MessagingException, IOException {
+        MimeBodyPart parsedRootPart = new MimeBodyPart();
 
         MimeConfig parserConfig  = new MimeConfig();
         parserConfig.setMaxHeaderLen(-1);
@@ -49,7 +42,7 @@ public class MimePartStreamParser {
         parserConfig.setMaxHeaderCount(-1);
 
         MimeStreamParser parser = new MimeStreamParser(parserConfig);
-        parser.setContentHandler(new PartBuilder(decryptedTempDirectory, decryptedRootPart));
+        parser.setContentHandler(new PartBuilder(fileProviderInterface, parsedRootPart));
         parser.setRecurse();
 
         inputStream = new BufferedInputStream(inputStream, 4096);
@@ -60,12 +53,12 @@ public class MimePartStreamParser {
             throw new MessagingException("Failed to parse decrypted content", e);
         }
 
-        return decryptedRootPart;
+        return parsedRootPart;
     }
 
-    private static Body createBody(InputStream inputStream, String transferEncoding, File decryptedTempDirectory)
+    private static Body createBody(InputStream inputStream, String transferEncoding, FileProviderInterface fileProviderInterface)
             throws IOException {
-        ProvidedTempFileBody body = new ProvidedTempFileBody(decryptedTempDirectory, transferEncoding);
+        ProvidedTempFileBody body = new ProvidedTempFileBody(fileProviderInterface, transferEncoding);
         OutputStream outputStream = body.getOutputStream();
         try {
             InputStream decodingInputStream;
@@ -95,26 +88,15 @@ public class MimePartStreamParser {
         return body;
     }
 
-    private static File getDecryptedTempDirectory(Context context) {
-        File directory = new File(context.getCacheDir(), DECRYPTED_CACHE_DIRECTORY);
-        if (!directory.exists()) {
-            if (!directory.mkdir()) {
-                Log.e(K9.LOG_TAG, "Error creating directory: " + directory.getAbsolutePath());
-            }
-        }
-
-        return directory;
-    }
-
 
     private static class PartBuilder implements ContentHandler {
-        private final File decryptedTempDirectory;
+        private final FileProviderInterface fileProviderInterface;
         private final MimeBodyPart decryptedRootPart;
-        private final Stack<Object> stack = new Stack<Object>();
+        private final Stack<Object> stack = new Stack<>();
 
-        public PartBuilder(File decryptedTempDirectory, MimeBodyPart decryptedRootPart)
+        public PartBuilder(FileProviderInterface fileProviderInterface, MimeBodyPart decryptedRootPart)
                 throws MessagingException {
-            this.decryptedTempDirectory = decryptedTempDirectory;
+            this.fileProviderInterface = fileProviderInterface;
             this.decryptedRootPart = decryptedRootPart;
         }
 
@@ -216,7 +198,7 @@ public class MimePartStreamParser {
             Part part = (Part) stack.peek();
 
             String transferEncoding = bd.getTransferEncoding();
-            Body body = createBody(inputStream, transferEncoding, decryptedTempDirectory);
+            Body body = createBody(inputStream, transferEncoding, fileProviderInterface);
 
             part.setBody(body);
         }

@@ -30,11 +30,13 @@ import com.fsck.k9.mail.Part;
 import com.fsck.k9.mail.internet.MessageExtractor;
 import com.fsck.k9.mail.internet.MimeBodyPart;
 import com.fsck.k9.mail.internet.TextBody;
-import com.fsck.k9.mailstore.MimePartStreamParser;
-import com.fsck.k9.mailstore.LocalMessage;
-import com.fsck.k9.mailstore.MessageHelper;
 import com.fsck.k9.mailstore.CryptoResultAnnotation;
 import com.fsck.k9.mailstore.CryptoResultAnnotation.CryptoError;
+import com.fsck.k9.mailstore.LocalMessage;
+import com.fsck.k9.mailstore.MessageHelper;
+import com.fsck.k9.mailstore.MimePartStreamParser;
+import com.fsck.k9.provider.DecryptedFileProvider;
+import com.fsck.k9.service.FileProviderInterface;
 import org.openintents.openpgp.IOpenPgpService2;
 import org.openintents.openpgp.OpenPgpDecryptionResult;
 import org.openintents.openpgp.OpenPgpError;
@@ -320,7 +322,9 @@ public class MessageCryptoHelper {
             protected MimeBodyPart doInBackground(Void... params) {
                 MimeBodyPart decryptedPart = null;
                 try {
-                    decryptedPart = MimePartStreamParser.parse(context, decryptedInputStream);
+                    FileProviderInterface fileProviderInterface =
+                            DecryptedFileProvider.getFileProviderInterface(context);
+                    decryptedPart = MimePartStreamParser.parse(fileProviderInterface, decryptedInputStream);
 
                     latch.await();
                 } catch (InterruptedException e) {
